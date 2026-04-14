@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Drawing;
-using System.Runtime.InteropServices;
+﻿using System.Drawing;
 
 class Program
 {
@@ -51,8 +49,8 @@ class Program
 
     static Vec3 CanvasToViewport(int canvasX, int canvasY)
     {
-        float viewportX = (float)canvasX * (viewportWidth / canvasWidth);
-        float viewportY = (float)canvasY * (viewportHeight / canvasHeight);
+        float viewportX = canvasX * ((float)viewportWidth / canvasWidth);
+        float viewportY = canvasY * ((float)viewportHeight / canvasHeight);
 
         Vec3 viewport = new Vec3(viewportX, viewportY, distance);
         return viewport;
