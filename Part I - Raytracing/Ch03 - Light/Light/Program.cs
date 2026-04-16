@@ -1,4 +1,6 @@
 ﻿using System.Drawing;
+using static Light;
+using static Vec3;
 
 class Program
 {
@@ -25,7 +27,15 @@ class Program
     {
         new Sphere(new Vec3(0, -1, 3), 1, Color.Red),
         new Sphere(new Vec3(2, 0, 4), 1, Color.Blue),
-        new Sphere(new Vec3(-2, 0, 4), 1, Color.Green)
+        new Sphere(new Vec3(-2, 0, 4), 1, Color.Green),
+        new Sphere(new Vec3(0, -5001, 0), 5000, Color.Yellow)
+    };
+
+    static Light[] lightsList =
+    {
+        new Light(Light.Type.Ambient, 0.2f, null, null),
+        new Light(Light.Type.Point, 0.6f, new Vec3(2, 1, 0), null),
+        new Light(Light.Type.Directional, 0.2f, null, new Vec3(1, 4, 4))
     };
 
     static void Main(string[] args)
@@ -80,7 +90,21 @@ class Program
 
         if (closestSphere != null)
         {
-            return closestSphere.Value.color;
+            Vec3 P = cameraPos + (direction * closestT);
+            Vec3 N = P - closestSphere.Value.centerPoint;
+            N = N * (1 / N.Length());
+
+            float lighting = ComputeLighting(P, N);
+
+            int r = (int)(closestSphere.Value.color.R * lighting);
+            int g = (int)(closestSphere.Value.color.G * lighting);
+            int b = (int)(closestSphere.Value.color.B * lighting);
+
+            r = Math.Clamp(r, 0, 255);
+            g = Math.Clamp(g, 0, 255);
+            b = Math.Clamp(b, 0, 255);
+
+            return Color.FromArgb(r, g, b);
         }
 
         return BACKGROUND_COLOR;
@@ -106,5 +130,39 @@ class Program
         float t2 = (-b - (float)Math.Sqrt(discriminant)) * (1 / (2 * a));
 
         return (t1, t2);
+    }
+
+    static float ComputeLighting(Vec3 point, Vec3 normal)
+    {
+        float i = 0f;
+
+        Vec3 L;
+
+        foreach (Light light in lightsList)
+        {
+            if (light.lightType == Light.Type.Ambient)
+            {
+                i += light.intensity;
+            }
+            else
+            {
+                if (light.lightType == Light.Type.Point)
+                {
+                    L = (Vec3)light.position - point;
+                }
+                else
+                {
+                    L = (Vec3)light.direction;
+                }
+
+                float dotProductNormalAndL = normal * L;
+
+                if (dotProductNormalAndL > 0)
+                {
+                    i = dotProductNormalAndL * (1 / (normal.Length() * L.Length())) * light.intensity + i;
+                }
+            }
+        }
+        return i;
     }
 }
