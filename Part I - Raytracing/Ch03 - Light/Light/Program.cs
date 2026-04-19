@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Numerics;
 using static Light;
 using static Vec3;
 
@@ -25,10 +26,10 @@ class Program
     //SPHERES TO BE RENDERED
     static Sphere[] spheresList =
     {
-        new Sphere(new Vec3(0, -1, 3), 1, Color.Red),
-        new Sphere(new Vec3(2, 0, 4), 1, Color.Blue),
-        new Sphere(new Vec3(-2, 0, 4), 1, Color.Green),
-        new Sphere(new Vec3(0, -5001, 0), 5000, Color.Yellow)
+        new Sphere(new Vec3(0, -1, 3), 1, Color.Red, 500),
+        new Sphere(new Vec3(2, 0, 4), 1, Color.Blue, 500),
+        new Sphere(new Vec3(-2, 0, 4), 1, Color.Green, 10),
+        new Sphere(new Vec3(0, -5001, 0), 5000, Color.Yellow, 1000)
     };
 
     static Light[] lightsList =
@@ -94,7 +95,7 @@ class Program
             Vec3 N = P - closestSphere.Value.centerPoint;
             N = N * (1 / N.Length());
 
-            float lighting = ComputeLighting(P, N);
+            float lighting = ComputeLighting(P, N, -direction, closestSphere.Value.specular);
 
             int r = (int)(closestSphere.Value.color.R * lighting);
             int g = (int)(closestSphere.Value.color.G * lighting);
@@ -132,11 +133,12 @@ class Program
         return (t1, t2);
     }
 
-    static float ComputeLighting(Vec3 point, Vec3 normal)
+    static float ComputeLighting(Vec3 point, Vec3 normal, Vec3 V, float specularity)
     {
-        float i = 0f;
+        float i = 0f; //intensity of light
 
         Vec3 L;
+        Vec3 reflection;
 
         foreach (Light light in lightsList)
         {
@@ -160,6 +162,18 @@ class Program
                 if (dotProductNormalAndL > 0)
                 {
                     i = dotProductNormalAndL * (1 / (normal.Length() * L.Length())) * light.intensity + i;
+                }
+
+                if (specularity != -1)
+                {
+                    reflection = normal * (float)2 * dotProductNormalAndL - L;
+                    float dotProdcutReflectionAndL = reflection * V;
+
+                    if (dotProdcutReflectionAndL > 0)
+                    {
+                        //MIGHT NEED TO CAST .POW as a float
+                        i = (float)Math.Pow(dotProdcutReflectionAndL / (reflection.Length() * V.Length()), specularity) * light.intensity + i;
+                    }
                 }
             }
         }
